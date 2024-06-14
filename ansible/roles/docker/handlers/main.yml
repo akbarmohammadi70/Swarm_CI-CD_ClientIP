@@ -1,0 +1,7 @@
+---
+# handlers file for Project
+- name: Enable Docker service
+  service:
+    name: docker
+    enabled: yes
+...

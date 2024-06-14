@@ -1,0 +1,9 @@
+---
+- name: Install Docker Config
+  include_tasks: docker_config.yml
+  when: ansible_os_family == "Debian"
+
+- name: Install Rregistery and Gitlab Runner 
+  include_tasks: docker_stack.yml
+  when: ansible_os_family == "Debian"
+...

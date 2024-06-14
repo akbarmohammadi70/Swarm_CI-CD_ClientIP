@@ -1,0 +1,52 @@
+stages:
+  - build
+  - dev-release
+  - prod-release
+
+variables:
+  REGISTRY_URL: 192.168.0.1:5000 
+  IMAGE_NAME: app
+  
+before_script:
+  - date
+
+build:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  before_script:
+    - docker info
+  script:
+    - docker build -t $REGISTRY_URL/$IMAGE_NAME:latest .
+    - docker push $REGISTRY_URL/$IMAGE_NAME:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_BRANCH == "main"'
+
+Development Release:
+  stage: dev-release
+  image: ubuntu
+  script:
+    - echo "Develop" 
+    - apt update && apt install -y gettext && apt install openssh-client -y && apt install sshpass -y
+    - sshpass -p ${pass} scp docker-compose.yml ${user}@192.168.0.1:/root/
+    - sshpass -p ${pass} ssh -o StrictHostKeyChecking=no ${user}@192.168.0.1 'cd ~  && docker stack deploy -c docker-compose.yml my-stack' 
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+  when: on_success
+  dependencies:
+    - build
+
+Production Release:
+  stage: prod-release
+  image: ubuntu
+  script:
+    - echo "Production" 
+    - apt update && apt install -y gettext && apt install openssh-client -y && apt install sshpass -y
+    - sshpass -p ${pass} scp docker-compose.yml ${user}@192.168.0.1:/root/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_COMMIT_BRANCH == "main"'
+  when: manual
+  dependencies:
+    - build

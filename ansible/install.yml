@@ -1,0 +1,41 @@
+---
+- name: Install Docker
+  become: yes
+  become_user: root
+  hosts:
+    - all
+  roles:
+    - roles/docker
+  tags:
+    - docker
+
+- name: Initialize Swarm
+  become: yes
+  become_user: root
+  hosts:
+    - all
+  roles:
+    - roles/swarm
+  tags:
+    - swarm
+
+- name: Install Nginx on Manager node for Reverse Proxy
+  become: yes
+  become_user: root
+  hosts:
+    - manager
+  roles:
+    - roles/nginx
+  tags:
+    - nginx
+
+- name: Install Registeery and Gitlab-Runner
+  become: yes
+  become_user: root
+  hosts:
+    - manager
+  roles:
+    - roles/registery_runner
+  tags:
+    - registery
+...

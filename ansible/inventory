@@ -1,0 +1,11 @@
+[manager]
+manager ansible_host=46.249.100.131 private_ip=192.168.0.1
+
+[workers]
+worker1 ansible_host=46.249.102.105 private_ip=192.168.0.2
+worker2 ansible_host=46.249.102.191 private_ip=192.168.0.3
+
+[worker1]
+worker1 ansible_host=46.249.102.105 private_ip=192.168.0.2
+[worker2]
+worker2 ansible_host=46.249.102.191 private_ip=192.168.0.3

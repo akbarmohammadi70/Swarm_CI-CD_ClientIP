@@ -1,0 +1,20 @@
+---
+- name: restart docker
+  service:
+    name: docker
+    state: restarted
+  delegate_to: "{{ item  }}"
+  loop:
+    - manager
+    - worker1
+    - worker2
+- name: restart docker
+  systemd:
+    state: reloaded
+    daemon_reload: yes
+  delegate_to: "{{ item  }}"
+  loop:
+    - manager
+    - worker1
+    - worker2
+...

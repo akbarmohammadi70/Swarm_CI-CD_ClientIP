@@ -1,0 +1,8 @@
+---
+- name: Install requirments
+  include_tasks: requirments.yml
+  when: ansible_os_family == "Debian"
+- name: Install Docker 
+  include_tasks: docker.yml
+  when: ansible_os_family == "Debian"
+...

@@ -1,0 +1,52 @@
+---
+- name: Define iptables rule to block traffic to exposed container ports
+  iptables:
+    table: mangle
+    chain: PREROUTING
+    protocol: tcp
+    destination_port: 5000
+    action: insert 
+    jump: ACCEPT
+  when: inventory_hostname in groups['manager']
+
+- name: Save iptables rules on Manager
+  shell: iptables-save > /etc/iptables/rules.v4
+  when: inventory_hostname in groups['manager']
+
+- name: Copy docker-compose for Registery and Gitlab-Runner
+  template:
+    src: docker-compose.yml.j2
+    dest: /root/registery/docker-compose.yml
+    mode: '0640'
+  when: inventory_hostname in groups['manager']
+
+- name: Ensure directory exists
+  file:
+    path: /mnt/gitlab-runner/config
+    state: directory
+    mode: '0755' 
+    recurse: yes
+  when: inventory_hostname in groups['manager']
+
+- name: Ensure directory exists
+  file:
+    path: /mnt/registry
+    state: directory
+    mode: '0755' 
+    recurse: yes
+  when: inventory_hostname in groups['manager']
+
+- name: Copy Gitlab-Runner config.toml
+  template:
+    src: config.toml.j2
+    dest: /mnt/gitlab-runner/config/config.toml
+    mode: '0640'
+  when: inventory_hostname in groups['manager']
+
+- name: Deploy stack from a compose file
+  docker_stack:
+    state: present
+    name: mystack
+    compose:
+      - /root/registery/docker-compose.yml
+...

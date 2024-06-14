@@ -1,0 +1,9 @@
+---
+# handlers file for Project
+- name: Reload Nginx
+  service:
+    name: nginx
+    state: reloaded
+    enabled: yes
+  when: inventory_hostname in groups['manager']
+...

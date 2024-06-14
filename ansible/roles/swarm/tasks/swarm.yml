@@ -1,0 +1,15 @@
+---
+- name: Initialize Docker Swarm on manager node
+  shell: docker swarm init --advertise-addr {{ manager_private_ip }} --listen-addr {{ manager_private_ip }}
+  when: inventory_hostname in groups['manager']
+  ignore_errors: true
+
+- name: Get join token for workers
+  shell: docker swarm join-token -q worker
+  register: worker_token
+  delegate_to: manager
+
+- name: Join worker nodes to the swarm
+  shell: docker swarm join --token {{ worker_token.stdout }} {{ manager_private_ip }}:2377
+  when: inventory_hostname in groups['workers']
+...

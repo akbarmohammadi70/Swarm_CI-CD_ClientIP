@@ -1,0 +1,5 @@
+---
+- name: Install Nginx on Manager Node
+  include_tasks: nginx.yml
+  when: ansible_os_family == "Debian"
+...

@@ -1,0 +1,97 @@
+---
+- name: Update and upgrade apt packages
+  become: true
+  apt:
+    upgrade: yes
+    update_cache: yes
+    cache_valid_time: 86400
+  ignore_errors: true  
+- name: Install required system packages
+  apt:
+    pkg:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - software-properties-common
+    - python3-pip
+    - virtualenv
+    - python3-setuptools
+    - iptables-persistent
+    state: present
+
+- name: Add Docker GPG apt Key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  ignore_errors: true
+
+- name: Ensure IP forwarding is enabled at runtime
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+
+- name: Ensure IP forwarding is enabled on boot
+  lineinfile:
+    path: /etc/sysctl.conf
+    regexp: '^net.ipv4.ip_forward'
+    line: 'net.ipv4.ip_forward = 1'
+    state: present
+
+- name: Allow SSH (port 22)
+  ansible.builtin.iptables:
+    table: mangle
+    chain: PREROUTING
+    protocol: tcp
+    destination_port: 22
+    action: insert
+    jump: ACCEPT
+
+- name: Allow established connections
+  ansible.builtin.iptables:
+    table: mangle
+    chain: PREROUTING
+    ctstate: ESTABLISHED,RELATED
+    action: insert
+    jump: ACCEPT
+
+- name: Allow DNS (port 53 UDP)
+  ansible.builtin.iptables:
+    table: mangle
+    chain: PREROUTING
+    protocol: udp
+    destination_port: 53
+    action: insert
+    jump: ACCEPT
+
+- name: Allow swarm nodes
+  ansible.builtin.iptables:
+    table: mangle
+    chain: PREROUTING
+    source: '{{ item }}'
+    jump: ACCEPT
+    action: insert
+  with_items: ['192.168.0.1', '192.168.0.2', '192.168.0.3']
+
+- name: Define iptables rule to block traffic to exposed container ports
+  iptables:
+    table: mangle
+    chain: PREROUTING
+    protocol: tcp
+    destination_port: "{{ item }}"
+    action: insert 
+    jump: ACCEPT
+  loop:
+    - 80
+  when: inventory_hostname in groups['manager']
+
+- name: Drop all other traffic
+  ansible.builtin.iptables:
+    table: mangle
+    chain: PREROUTING
+    action: append
+    jump: DROP
+
+- name: Save iptables rules
+  shell: iptables-save > /etc/iptables/rules.v4
+...

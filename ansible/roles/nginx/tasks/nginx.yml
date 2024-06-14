@@ -1,0 +1,28 @@
+---
+- name: Update APT package index
+  apt:
+    update_cache: yes
+  when: inventory_hostname in groups['manager']
+
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+  when: inventory_hostname in groups['manager']
+
+- name: Copy Nginx config template to sites-available
+  template:
+    src: app.conf.j2 
+    dest: /etc/nginx/sites-available/app.conf
+  when: inventory_hostname in groups['manager']
+
+- name: Create symbolic link to sites-enabled
+  file:
+    src: /etc/nginx/sites-available/app.conf
+    dest: /etc/nginx/sites-enabled/app.conf
+    state: link
+  notify:
+    - Reload Nginx
+  when: inventory_hostname in groups['manager']
+
+...

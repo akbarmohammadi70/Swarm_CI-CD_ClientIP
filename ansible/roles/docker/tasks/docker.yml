@@ -1,0 +1,28 @@
+---
+- name: Add Docker Repository
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu jammy stable
+    state: present
+
+- name: install docker-ce
+  apt:
+    name: docker-ce
+    state: latest
+  notify: Enable Docker service
+
+- name: Download Docker Compose 1.29.2
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-{{ ansible_system | lower }}-{{ ansible_architecture }}"
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+  ignore_errors: true
+
+- name: Create symlink for Docker Compose
+  file:
+    src: /usr/local/bin/docker-compose
+    dest: /usr/bin/docker-compose
+    state: link
+
+- name: Install Docker Module for Python
+  shell: pip install docker --break-system-packages  && pip install jsondiff --break-system-packages
+...

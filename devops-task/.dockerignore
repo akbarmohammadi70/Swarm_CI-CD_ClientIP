@@ -1,0 +1,11 @@
+node_modules
+*.log
+Dockerfile
+docker-compose.yml
+.git
+.gitignore
+.env
+tmp/
+temp/
+.DS_Store
+Thumbs.db

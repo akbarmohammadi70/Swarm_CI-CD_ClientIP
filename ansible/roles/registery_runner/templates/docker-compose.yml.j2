@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  registry:
+    image: registry:2
+    ports:
+      - "5000:5000"
+    volumes:
+      - /mnt/registry:/var/lib/registry
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == srv2461176483
+  gitlab-runner:
+    image: gitlab/gitlab-runner
+    volumes:
+      - '/mnt/gitlab-runner/config:/etc/gitlab-runner'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == srv2461176483
+networks:
+  default:
+    driver: overlay

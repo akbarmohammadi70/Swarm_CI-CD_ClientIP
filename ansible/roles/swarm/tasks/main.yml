@@ -1,0 +1,5 @@
+---
+- name: Install Swarm
+  include_tasks: swarm.yml
+  when: ansible_os_family == "Debian"
+...
