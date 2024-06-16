@@ -14,6 +14,7 @@ This repository contains Ansible roles and a playbook to automate the deployment
 2. **swarm**: Initializes a Docker Swarm.
 3. **nginx**: Installs and configures Nginx on the manager node to act as a reverse proxy, serving on port 80.
 4. **registery_runner**: Sets up a Docker registry and GitLab Runner on the manager node.
+5. **routing**: Convert the manager node into a router for all worker nodes and manually execute these commands on the worker nodes to send default routes towards the manager node: `ip route del default` and `ip route add default via 192.168.0.1`.
 
 ### Ansible Playbook
 
@@ -24,7 +25,8 @@ The playbook `deploy.yml` defines the installation steps:
 - name: Install Docker
   become: yes
   become_user: root
-  hosts: all
+  hosts:
+    - all
   roles:
     - roles/docker
   tags:
@@ -33,7 +35,8 @@ The playbook `deploy.yml` defines the installation steps:
 - name: Initialize Swarm
   become: yes
   become_user: root
-  hosts: all
+  hosts:
+    - all
   roles:
     - roles/swarm
   tags:
@@ -42,20 +45,33 @@ The playbook `deploy.yml` defines the installation steps:
 - name: Install Nginx on Manager node for Reverse Proxy
   become: yes
   become_user: root
-  hosts: manager
+  hosts:
+    - manager
   roles:
     - roles/nginx
   tags:
     - nginx
 
-- name: Install Registry and Gitlab-Runner
+- name: Install Registeery and Gitlab-Runner
   become: yes
   become_user: root
-  hosts: manager
+  hosts:
+    - manager
   roles:
     - roles/registery_runner
   tags:
     - registery
+
+- name: Routing
+  become: yes
+  become_user: root
+  hosts:
+    - manager
+  roles:
+    - roles/routing
+  tags:
+    - routing
+...
   ```
 
 ### Usage
@@ -78,9 +94,10 @@ The playbook `deploy.yml` defines the installation steps:
    - Swarm should be initialized.
    - Nginx should be running on the manager node, serving as a reverse proxy on port 80.
    - Registry and GitLab Runner should be installed on the manager node within the Docker Swarm.
+   - Convert the manager node into a router for all worker nodes
 
 ### Notes
-- Each role (`docker`, `swarm`, `nginx`, `registery_runner`) can be individually tagged for selective execution.
+- Each role (`docker`, `swarm`, `nginx`, `registery_runner`, `routing`) can be individually tagged for selective execution.
 - Ensure all nodes meet the prerequisites and are reachable via SSH before running the playbook.
 
 

@@ -1,0 +1,57 @@
+---
+- name: Set iptables policy for FORWARD chain to ACCEPT
+  ansible.builtin.iptables:
+    table: filter
+    chain: FORWARD
+    policy: ACCEPT
+    state: present
+  when: inventory_hostname in groups['manager']
+
+- name: Add MASQUERADE rule to POSTROUTING chain in nat table
+  ansible.builtin.iptables:
+    table: nat
+    chain: POSTROUTING
+    out_interface: eth0
+    jump: MASQUERADE
+    action: insert
+  when: inventory_hostname in groups['manager']
+
+- name: Create DIVERT chain in mangle table
+  command: iptables -t mangle -N DIVERT
+  ignore_errors: true
+  when: inventory_hostname in groups['manager']
+
+- name: Add rule to PREROUTING chain in mangle table to jump to DIVERT chain for TCP packets
+  ansible.builtin.iptables:
+    table: mangle
+    chain: PREROUTING
+    protocol: tcp
+    match: socket
+    jump: DIVERT
+    action: insert
+  when: inventory_hostname in groups['manager']
+
+- name: Mark packets in DIVERT chain with mark 1
+  command: iptables -t mangle -I DIVERT -j MARK --set-mark 1
+  when: inventory_hostname in groups['manager']
+
+- name: Accept packets in DIVERT chain
+  ansible.builtin.iptables:
+    table: mangle
+    chain: DIVERT
+    jump: ACCEPT
+    action: insert
+  when: inventory_hostname in groups['manager']
+
+- name: Add a rule to route table to use lookup 100 for packets with fwmark 1
+  command: ip rule add fwmark 1 lookup 100
+  when: inventory_hostname in groups['manager']
+
+- name: Add local route using command module
+  command: ip route add local 0.0.0.0/0 dev lo table 100
+  when: inventory_hostname in groups['manager']
+
+- name: Save iptables rules
+  shell: iptables-save > /etc/iptables/rules.v4
+  when: inventory_hostname in groups['manager']
+...

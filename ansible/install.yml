@@ -38,4 +38,14 @@
     - roles/registery_runner
   tags:
     - registery
+
+- name: Routing
+  become: yes
+  become_user: root
+  hosts:
+    - manager
+  roles:
+    - roles/routing
+  tags:
+    - routing
 ...
